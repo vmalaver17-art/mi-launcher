@@ -53,7 +53,6 @@ import kotlin.math.roundToInt
 fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Unit) {
     val context = LocalContext.current
     val byKey = remember(allApps) { allApps.associateBy { it.key } }
-    val favs = s.favorites.value.mapNotNull { byKey[it] }
     val hidden = s.hidden.value.mapNotNull { byKey[it] }
 
     Column(
@@ -64,7 +63,7 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
     ) {
         Row(Modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Volver", tint = Color.White) }
-            Text("Personalizar", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Light)
+            Text("personalizar", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Light)
         }
 
         LazyColumn(
@@ -72,8 +71,13 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
             contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, bottom = 40.dp),
         ) {
             // ---------------- Apariencia ----------------
-            item { Section("Apariencia") }
+            item { Section("Colores") }
             item { Column { Label("Color de acento"); AccentPicker(s) } }
+            item {
+                SliderRow("Transparencia de mosaicos", "${(s.tileAlpha.value * 100).roundToInt()}%", s.tileAlpha.value, 0.3f..1f, 13) {
+                    s.tileAlpha.value = it
+                }
+            }
             item {
                 SliderRow(
                     "Oscurecer fondo de pantalla", "${(s.bgDim.value * 100).roundToInt()}%",
@@ -85,8 +89,24 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
                     Text("Cambiar fondo de pantalla")
                 }
             }
+
+            // ---------------- Mosaicos ----------------
+            item { Section("Mosaicos") }
+            item { SwitchRow("Mostrar más mosaicos (6 columnas)", s.moreTiles.value) { s.moreTiles.value = it } }
+            item { SwitchRow("Íconos blancos (estilo Windows Phone)", s.monoIcons.value) { s.monoIcons.value = it } }
+            item { SwitchRow("Nombres en los mosaicos", s.tileLabels.value) { s.tileLabels.value = it } }
+            item { SwitchRow("Mosaico de reloj", s.isPinned(CLOCK_TILE)) { s.togglePin(CLOCK_TILE) } }
+            item { SwitchRow("Reloj de 24 horas", s.clock24.value) { s.clock24.value = it } }
+            item { SwitchRow("Mostrar fecha en el reloj", s.showDate.value) { s.showDate.value = it } }
+            item {
+                OutlinedButton(onClick = { s.initDefaults(allApps) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    Text("Restablecer mosaicos de inicio")
+                }
+            }
+
+            // ---------------- Texto ----------------
+            item { Section("Texto") }
             item { Column { Label("Fuente"); Chips(FONT_NAMES, s.font.value) { s.font.value = it } } }
-            item { Column { Label("Alineación"); Chips(ALIGN_NAMES, s.align.value) { s.align.value = it } } }
             item {
                 SliderRow(
                     "Tamaño de texto", "${(s.textScale.value * 100).roundToInt()}%",
@@ -94,57 +114,14 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
                 ) { s.textScale.value = it }
             }
 
-            // ---------------- Reloj ----------------
-            item { Section("Reloj") }
-            item { SwitchRow("Formato 24 horas", s.clock24.value) { s.clock24.value = it } }
-            item { SwitchRow("Mostrar fecha", s.showDate.value) { s.showDate.value = it } }
-            item {
-                SliderRow("Tamaño del reloj", "${s.clockSize.value.roundToInt()}", s.clockSize.value, 40f..120f, 15) {
-                    s.clockSize.value = it
-                }
-            }
-
-            // ---------------- Apps ----------------
-            item { Section("Apps") }
-            item { SwitchRow("Íconos en el cajón", s.iconsDrawer.value) { s.iconsDrawer.value = it } }
-            item { SwitchRow("Íconos en inicio", s.iconsHome.value) { s.iconsHome.value = it } }
-            item {
-                SliderRow("Tamaño de íconos", "${s.iconSize.value.roundToInt()} dp", s.iconSize.value, 24f..64f, 9) {
-                    s.iconSize.value = it
-                }
-            }
-            item {
-                val c = s.columns.value
-                SliderRow(
-                    "Columnas del cajón", if (c == 1) "Lista" else "$c",
-                    c.toFloat(), 1f..5f, 3,
-                ) { s.columns.value = it.roundToInt() }
-            }
-            item { SwitchRow("Abrir teclado al entrar al cajón", s.autoKeyboard.value) { s.autoKeyboard.value = it } }
-            item {
-                SwitchRow("Abrir la app si solo hay un resultado", s.autoLaunch.value) { s.autoLaunch.value = it }
-            }
-
-            // ---------------- Inicio ----------------
-            item { Section("Apps en inicio") }
-            if (favs.isEmpty()) item { Hint("En el cajón, mantén presionada una app → Fijar en inicio.") }
-            items(favs, key = { "fav" + it.key }) { app ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    AppIcon(app.icon, 28f)
-                    Spacer(Modifier.width(12.dp))
-                    Text(s.label(app), color = Color.White, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    IconButton(onClick = { s.moveFavorite(app.key, -1) }) { Icon(Icons.Filled.KeyboardArrowUp, "Subir", tint = Color.White) }
-                    IconButton(onClick = { s.moveFavorite(app.key, 1) }) { Icon(Icons.Filled.KeyboardArrowDown, "Bajar", tint = Color.White) }
-                    IconButton(onClick = { s.toggleFavorite(app.key) }) { Icon(Icons.Filled.Close, "Quitar", tint = Color.White.copy(alpha = 0.6f)) }
-                }
-            }
-
             // ---------------- Ocultas ----------------
             item { Section("Apps ocultas") }
-            if (hidden.isEmpty()) item { Hint("Ninguna. Puedes ocultar apps desde el cajón.") }
+            if (hidden.isEmpty()) item { Hint("Ninguna. Puedes ocultar apps desde la lista de apps.") }
             items(hidden, key = { "hid" + it.key }) { app ->
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    AppIcon(app.icon, 28f)
+                    Box(Modifier.size(36.dp).background(Color(s.colorOf(app.key))), contentAlignment = Alignment.Center) {
+                        TileIcon(s, app, Modifier.size(24.dp))
+                    }
                     Spacer(Modifier.width(12.dp))
                     Text(s.label(app), color = Color.White, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     TextButton(onClick = { s.unhide(app.key) }) { Text("Mostrar") }
@@ -161,7 +138,7 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
                     OutlinedButton(onClick = { s.resetLook() }, modifier = Modifier.fillMaxWidth()) {
                         Text("Restablecer apariencia")
                     }
-                    Hint("Gestos: desliza arriba = apps · abajo = notificaciones · mantén presionado el fondo = este menú · toca el reloj = alarmas.")
+                    Hint("Desliza a la izquierda = lista de apps · mantén presionado un mosaico = tamaño, color, mover o desanclar · toca una letra = saltar a otra letra · mantén presionado el fondo de inicio = este menú.")
                 }
             }
         }
@@ -234,15 +211,15 @@ private fun Chips(options: List<String>, selected: Int, onSelect: (Int) -> Unit)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AccentPicker(s: LauncherSettings) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         ACCENTS.forEach { c ->
             val selected = c == s.accent.value
             Box(
                 Modifier
-                    .size(36.dp)
-                    .border(if (selected) 2.dp else 0.dp, if (selected) Color.White else Color.Transparent, CircleShape)
-                    .padding(4.dp)
-                    .background(Color(c), CircleShape)
+                    .size(44.dp)
+                    .border(if (selected) 3.dp else 0.dp, if (selected) Color.White else Color.Transparent)
+                    .padding(if (selected) 5.dp else 0.dp)
+                    .background(Color(c))
                     .clickable { s.accent.value = c }
             )
         }
