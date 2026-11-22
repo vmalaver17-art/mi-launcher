@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
     private val apps = mutableStateOf<List<AppInfo>>(emptyList())
     private val homeSignal = mutableIntStateOf(0)
     private val isDefault = mutableStateOf(true)
+    private val notifAccess = mutableStateOf(true)
     private var loadJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,13 +51,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         settings = LauncherSettings(this)
         setContent {
-            LauncherApp(settings, apps.value, homeSignal.intValue, isDefault.value)
+            LauncherApp(settings, apps.value, homeSignal.intValue, isDefault.value, notifAccess.value)
         }
     }
 
     override fun onResume() {
         super.onResume()
         isDefault.value = isDefaultLauncher(this)
+        notifAccess.value = Badges.hasAccess(this)
+        NotifListener.instance?.refresh()
         reload() // refresca la lista por si se instaló o desinstaló algo
     }
 
@@ -75,7 +78,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun LauncherApp(s: LauncherSettings, allApps: List<AppInfo>, homeSignal: Int, isDefault: Boolean) {
+fun LauncherApp(s: LauncherSettings, allApps: List<AppInfo>, homeSignal: Int, isDefault: Boolean, notifAccess: Boolean) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val accent = Color(s.accent.value)
@@ -132,6 +135,7 @@ fun LauncherApp(s: LauncherSettings, allApps: List<AppInfo>, homeSignal: Int, is
                         s = s,
                         apps = visible,
                         isDefault = isDefault,
+                        notifAccess = notifAccess,
                         onLaunch = launch,
                         onOpenList = { scope.launch { pager.animateScrollToPage(1) } },
                         onOpenSettings = { showSettings = true },

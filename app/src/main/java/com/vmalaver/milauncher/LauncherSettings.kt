@@ -85,6 +85,7 @@ class LauncherSettings(context: Context) {
     val monoIcons = PrefBool(p, "mono_icons", true)     // íconos blancos como en WP
     val moreTiles = PrefBool(p, "more_tiles", false)    // 6 columnas en vez de 4
     val tileLabels = PrefBool(p, "tile_labels", true)
+    val badges = PrefBool(p, "badges", true)            // número de notificaciones en mosaicos
     val font = PrefInt(p, "font", 1)
     val textScale = PrefFloat(p, "text_scale", 1f)
 
@@ -96,6 +97,7 @@ class LauncherSettings(context: Context) {
     val tiles = PrefList(p, "tiles")
     val sizes = PrefMap(p, "sizes")
     val colors = PrefMap(p, "colors")
+    val positions = PrefMap(p, "positions")          // posición libre de cada mosaico: "x,y"
     val hidden = PrefList(p, "hidden")
     val renames = PrefMap(p, "renames")
     val initialized = PrefBool(p, "initialized", false)
@@ -104,7 +106,16 @@ class LauncherSettings(context: Context) {
 
     fun isPinned(key: String) = key in tiles.value
     fun togglePin(key: String) {
-        tiles.value = if (isPinned(key)) tiles.value - key else tiles.value + key
+        if (isPinned(key)) {
+            tiles.value = tiles.value - key
+            positions.value = positions.value - key
+        } else {
+            tiles.value = tiles.value + key
+        }
+    }
+    fun posOf(key: String): Pair<Int, Int>? = positions.value[key]?.split(',')?.let { p ->
+        val x = p.getOrNull(0)?.toIntOrNull(); val y = p.getOrNull(1)?.toIntOrNull()
+        if (x != null && y != null) x to y else null
     }
     fun sizeOf(key: String): String = sizes.value[key] ?: if (key == CLOCK_TILE) "w" else "m"
     fun setSize(key: String, size: String) { sizes.value = sizes.value + (key to size) }
@@ -122,6 +133,7 @@ class LauncherSettings(context: Context) {
     fun hide(key: String) {
         hidden.value = (hidden.value + key).distinct()
         tiles.value = tiles.value - key
+        positions.value = positions.value - key
     }
     fun unhide(key: String) { hidden.value = hidden.value - key }
     fun rename(key: String, name: String) {
@@ -151,13 +163,14 @@ class LauncherSettings(context: Context) {
         tiles.value = t
         sizes.value = sz
         colors.value = emptyMap()
+        positions.value = emptyMap()
         initialized.value = true
     }
 
     fun resetLook() {
         accent.reset(); font.reset()
         bgDim.reset(); tileAlpha.reset(); textScale.reset()
-        monoIcons.reset(); moreTiles.reset(); tileLabels.reset(); clock24.reset(); showDate.reset()
+        monoIcons.reset(); moreTiles.reset(); tileLabels.reset(); badges.reset(); clock24.reset(); showDate.reset()
     }
 
     val fontFamily: FontFamily

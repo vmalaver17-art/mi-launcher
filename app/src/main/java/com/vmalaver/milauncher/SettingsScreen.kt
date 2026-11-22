@@ -96,6 +96,12 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
             item { SwitchRow("Mostrar más mosaicos (6 columnas)", s.moreTiles.value) { s.moreTiles.value = it } }
             item { SwitchRow("Íconos blancos (estilo Windows Phone)", s.monoIcons.value) { s.monoIcons.value = it } }
             item { SwitchRow("Nombres en los mosaicos", s.tileLabels.value) { s.tileLabels.value = it } }
+            item { SwitchRow("Número de notificaciones en mosaicos", s.badges.value) { s.badges.value = it } }
+            item {
+                OutlinedButton(onClick = { Badges.requestAccess(context) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (Badges.hasAccess(context)) "Permiso de notificaciones: activado ✓" else "Dar permiso de notificaciones")
+                }
+            }
             item { SwitchRow("Mosaico de reloj", s.isPinned(CLOCK_TILE)) { s.togglePin(CLOCK_TILE) } }
             item { SwitchRow("Reloj de 24 horas", s.clock24.value) { s.clock24.value = it } }
             item { SwitchRow("Mostrar fecha en el reloj", s.showDate.value) { s.showDate.value = it } }
@@ -139,7 +145,7 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
                     OutlinedButton(onClick = { s.resetLook() }, modifier = Modifier.fillMaxWidth()) {
                         Text("Restablecer apariencia")
                     }
-                    Hint("Desliza a la izquierda = lista de apps · mantén presionado un mosaico = tamaño, color, mover o desanclar · toca una letra = saltar a otra letra · mantén presionado el fondo de inicio = este menú.")
+                    Hint("Desliza a la izquierda = lista de apps · mantén presionado un mosaico y arrástralo = moverlo a cualquier lugar · mantén presionado y suelta = tamaño, color o desanclar · toca una letra = saltar a otra letra · mantén presionado el fondo de inicio = este menú.")
                 }
             }
         }

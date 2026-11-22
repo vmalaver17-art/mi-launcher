@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -265,10 +266,20 @@ private fun AppRow(s: LauncherSettings, app: AppInfo, onClick: () -> Unit, onRen
             Spacer(Modifier.width(14.dp))
             Text(
                 s.label(app),
+                modifier = Modifier.weight(1f),
                 style = bodyStyle(s, 20f).copy(color = Color.White),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            val count = if (s.badges.value) Badges.counts[app.component.packageName] ?: 0 else 0
+            if (count > 0) {
+                Box(
+                    Modifier.padding(start = 8.dp).size(26.dp).background(Color(s.accent.value), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(if (count > 99) "99+" else "$count", color = Color.White, fontSize = 11.sp)
+                }
+            }
         }
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             DropdownMenuItem(
