@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var settings: LauncherSettings
     private val apps = mutableStateOf<List<AppInfo>>(emptyList())
     private val homeSignal = mutableIntStateOf(0)
+    private val isDefault = mutableStateOf(true)
     private var loadJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,12 +50,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         settings = LauncherSettings(this)
         setContent {
-            LauncherApp(settings, apps.value, homeSignal.intValue)
+            LauncherApp(settings, apps.value, homeSignal.intValue, isDefault.value)
         }
     }
 
     override fun onResume() {
         super.onResume()
+        isDefault.value = isDefaultLauncher(this)
         reload() // refresca la lista por si se instaló o desinstaló algo
     }
 
@@ -73,7 +75,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun LauncherApp(s: LauncherSettings, allApps: List<AppInfo>, homeSignal: Int) {
+fun LauncherApp(s: LauncherSettings, allApps: List<AppInfo>, homeSignal: Int, isDefault: Boolean) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val accent = Color(s.accent.value)
@@ -129,6 +131,7 @@ fun LauncherApp(s: LauncherSettings, allApps: List<AppInfo>, homeSignal: Int) {
                     StartScreen(
                         s = s,
                         apps = visible,
+                        isDefault = isDefault,
                         onLaunch = launch,
                         onOpenList = { scope.launch { pager.animateScrollToPage(1) } },
                         onOpenSettings = { showSettings = true },

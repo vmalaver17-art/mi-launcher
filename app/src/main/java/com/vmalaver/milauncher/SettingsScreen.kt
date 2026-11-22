@@ -52,6 +52,7 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Unit) {
     val context = LocalContext.current
+    val setDefault = rememberSetDefaultLauncher()
     val byKey = remember(allApps) { allApps.associateBy { it.key } }
     val hidden = s.hidden.value.mapNotNull { byKey[it] }
 
@@ -132,7 +133,7 @@ fun SettingsScreen(s: LauncherSettings, allApps: List<AppInfo>, onBack: () -> Un
             item { Section("Sistema") }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { Apps.openHomeSettings(context) }, modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = { setDefault() }, modifier = Modifier.fillMaxWidth()) {
                         Text("Usar como launcher predeterminado")
                     }
                     OutlinedButton(onClick = { s.resetLook() }, modifier = Modifier.fillMaxWidth()) {

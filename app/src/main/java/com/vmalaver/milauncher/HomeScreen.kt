@@ -96,6 +96,7 @@ private fun pack(keys: List<String>, sizeOf: (String) -> String, cols: Int): Pai
 fun StartScreen(
     s: LauncherSettings,
     apps: List<AppInfo>,
+    isDefault: Boolean,
     onLaunch: (AppInfo) -> Unit,
     onOpenList: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -115,6 +116,22 @@ fun StartScreen(
             .pointerInput(Unit) { detectTapGestures(onLongPress = { openSettings() }) }
             .padding(start = 12.dp, end = 12.dp, top = 28.dp, bottom = 24.dp),
     ) {
+        if (!isDefault) {
+            val setDefault = rememberSetDefaultLauncher()
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+                    .background(Color(s.accent.value))
+                    .clickable { setDefault() }
+                    .padding(14.dp),
+            ) {
+                Text(
+                    "Toca aquí para usar Mi Launcher como pantalla de inicio",
+                    style = bodyStyle(s, 15f).copy(color = Color.White),
+                )
+            }
+        }
         if (keys.isEmpty()) {
             Text(
                 "Desliza a la izquierda y mantén presionada una app para anclarla a inicio.",
